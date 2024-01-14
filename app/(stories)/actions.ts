@@ -170,7 +170,7 @@ export async function upvoteAction(
         .set({
           karma: sql`${usersTable.karma} + 1`,
         })
-        .where(sql`${usersTable.username} = ${story.username}`),
+        .where(sql`${usersTable.id} = ${story.submitted_by}`),
     ]);
 
     revalidatePath("/");
