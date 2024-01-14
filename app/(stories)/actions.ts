@@ -2,7 +2,13 @@
 
 import { signOut } from "@/app/auth";
 import z from "zod";
-import { db, usersTable, storiesTable } from "@/app/db";
+import {
+  db,
+  usersTable,
+  storiesTable,
+  upvotesTable,
+  genUpvoteId,
+} from "@/app/db";
 import { auth } from "@/app/auth";
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -35,6 +41,14 @@ export type UpvoteActionData = {
       }
     | {
         code: "AUTH_ERROR";
+        message: string;
+      }
+    | {
+        code: "ALREADY_UPVOTED_ERROR";
+        message: string;
+      }
+    | {
+        code: "SELF_UPVOTE_ERROR";
         message: string;
       };
 };
@@ -105,19 +119,46 @@ export async function upvoteAction(
         .select({
           id: storiesTable.id,
           username: storiesTable.username,
+          submitted_by: storiesTable.submitted_by,
+          upvote_id: upvotesTable.id,
         })
         .from(storiesTable)
         .where(sql`${storiesTable.id} = ${data.data.storyId}`)
         .limit(1)
+        .leftJoin(
+          upvotesTable,
+          sql`${storiesTable.id} = ${upvotesTable.story_id} AND ${upvotesTable.user_id} = ${user.id}`
+        )
     )[0];
 
     if (!story) {
       throw new Error("Story not found");
     }
 
-    console.debug("story", story);
+    if (story.upvote_id) {
+      return {
+        error: {
+          code: "ALREADY_UPVOTED_ERROR",
+          message: "You already upvoted this story",
+        },
+      };
+    }
+
+    if (story.submitted_by === user.id) {
+      return {
+        error: {
+          code: "SELF_UPVOTE_ERROR",
+          message: "You can't upvote your own story",
+        },
+      };
+    }
 
     await Promise.all([
+      tx.insert(upvotesTable).values({
+        id: genUpvoteId(),
+        user_id: user.id,
+        story_id: story.id,
+      }),
       tx
         .update(storiesTable)
         .set({
