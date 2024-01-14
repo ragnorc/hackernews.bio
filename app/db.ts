@@ -81,7 +81,11 @@ export const storiesTable = pgTable(
 );
 
 export const genStoryId = () => {
-  return `story_${nanoid(12)}`;
+  return composeStoryId(nanoid(12));
+};
+
+export const composeStoryId = (id: string) => {
+  return `story_${id}`;
 };
 
 export const votesTable = pgTable(

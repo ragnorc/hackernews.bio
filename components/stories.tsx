@@ -213,7 +213,8 @@ export async function Stories({
                 <div className="text-xs text-[#666] md:text-[#828282]">
                   {story.points} point{story.points > 1 ? "s" : ""} by{" "}
                   {story.submitted_by ?? story.username}{" "}
-                  <TimeAgo now={now} date={story.created_at} /> |{" "}
+                  <TimeAgo now={now} date={story.created_at} />
+                  <span aria-hidden={true}> | </span>
                   <span
                     className="cursor-default"
                     aria-hidden="true"
@@ -221,15 +222,16 @@ export async function Stories({
                   >
                     flag
                   </span>
-                  {story.voted_by_me && <UnvoteForm storyId={story.id} />} |{" "}
+                  {story.voted_by_me && <UnvoteForm storyId={story.id} />}
+                  <span aria-hidden={true}> | </span>
                   <span
                     className="cursor-default"
                     aria-hidden="true"
                     title="Not implemented"
                   >
                     hide
-                  </span>{" "}
-                  |{" "}
+                  </span>
+                  <span aria-hidden={true}> | </span>
                   <Link
                     prefetch={true}
                     className="hover:underline"

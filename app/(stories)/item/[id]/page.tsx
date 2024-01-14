@@ -1,4 +1,11 @@
-import { db, usersTable, storiesTable } from "@/app/db";
+import {
+  db,
+  usersTable,
+  storiesTable,
+  genStoryId,
+  composeStoryId,
+  votesTable,
+} from "@/app/db";
 import { TimeAgo } from "@/components/time-ago";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
@@ -9,6 +16,9 @@ import { Comments } from "@/components/comments";
 import { ReplyForm } from "./reply-form";
 import Link from "next/link";
 import { VoteIcon } from "@/components/icons/vote-icon";
+import { UnvoteForm, VoteForm } from "@/components/voting";
+import { Session } from "next-auth";
+import { auth } from "@/app/auth";
 
 export const metadata = {
   openGraph: {
@@ -24,11 +34,16 @@ export const metadata = {
   },
 };
 
-const getStory = async function getStory(idParam: string) {
-  const id = `story_${idParam}`;
-  return (
-    await db
-      .select({
+const getStory = async function getStory(
+  idParam: string,
+  session: Session | null
+) {
+  const id = composeStoryId(idParam);
+  const userId = session?.user?.id;
+
+  const query = db
+    .select({
+      ...{
         id: storiesTable.id,
         title: storiesTable.title,
         domain: storiesTable.domain,
@@ -38,15 +53,26 @@ const getStory = async function getStory(idParam: string) {
         submitted_by: usersTable.username,
         comments_count: storiesTable.comments_count,
         created_at: storiesTable.created_at,
-      })
-      .from(storiesTable)
-      .where(sql`${storiesTable.id} = ${id}`)
-      .limit(1)
-      .leftJoin(
-        usersTable,
-        sql`${usersTable.id} = ${storiesTable.submitted_by}`
-      )
-  )[0];
+      },
+      ...(userId
+        ? {
+            voted_by_me: sql<boolean>`${votesTable.id} IS NOT NULL`,
+          }
+        : {}),
+    })
+    .from(storiesTable)
+    .where(sql`${storiesTable.id} = ${id}`)
+    .limit(1)
+    .leftJoin(usersTable, sql`${usersTable.id} = ${storiesTable.submitted_by}`);
+
+  if (userId) {
+    query.leftJoin(
+      votesTable,
+      sql`${votesTable.story_id} = ${storiesTable.id} AND ${votesTable.user_id} = ${userId}`
+    );
+  }
+
+  return (await query)[0];
 };
 
 /**
@@ -60,9 +86,10 @@ export default async function ItemPage({
   params: { id: string };
 }) {
   const rid = headers().get("x-vercel-id") ?? nanoid();
+  const session = await auth();
 
   console.time(`fetch story ${idParam} (req: ${rid})`);
-  const story = await getStory(idParam);
+  const story = await getStory(idParam, session);
   console.timeEnd(`fetch story ${idParam} (req: ${rid})`);
 
   if (!story) {
@@ -74,7 +101,10 @@ export default async function ItemPage({
     <div className="px-3">
       <div className="mb-4 flex items-start">
         <div className="flex flex-col items-center mr-1 gap-y-1">
-          <VoteIcon />
+          <VoteForm
+            storyId={composeStoryId(idParam)}
+            votedByMe={!!story.voted_by_me}
+          />
         </div>
         <div className="flex-grow">
           {story.url != null ? (
@@ -102,19 +132,20 @@ export default async function ItemPage({
             </span>
           )}
 
-          <p className="text-xs text-[#666] md:text-[#828282]">
+          <div className="text-xs text-[#666] md:text-[#828282]">
             {story.points} point{story.points > 1 ? "s" : ""} by{" "}
             {story.submitted_by ?? story.username}{" "}
-            <TimeAgo now={now} date={story.created_at} />{" "}
-            <span aria-hidden={true}>| </span>
+            <TimeAgo now={now} date={story.created_at} />
+            <span aria-hidden={true}> | </span>
             <span className="cursor-default" title="Not implemented">
               flag
-            </span>{" "}
-            <span aria-hidden={true}>| </span>
+            </span>
+            {story.voted_by_me && <UnvoteForm storyId={story.id} />}
+            <span aria-hidden={true}> | </span>
             <span className="cursor-default" title="Not implemented">
               hide
-            </span>{" "}
-            <span aria-hidden={true}>| </span>
+            </span>
+            <span aria-hidden={true}> | </span>
             <Link
               prefetch={true}
               className="hover:underline"
@@ -122,7 +153,7 @@ export default async function ItemPage({
             >
               {story.comments_count} comments
             </Link>
-          </p>
+          </div>
           <div className="my-4 max-w-2xl space-y-3">
             <ReplyForm storyId={story.id} />
           </div>

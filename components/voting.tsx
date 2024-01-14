@@ -55,8 +55,8 @@ function UnvoteFormFields({ storyId }: { storyId: string }) {
       <input type="hidden" name="storyId" value={storyId} />
       {!pending && (
         <>
-          {" "}
-          | <button>unvote</button>
+          <span aria-hidden="true"> | </span>
+          <button>unvote</button>
         </>
       )}
     </>
