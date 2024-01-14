@@ -1,0 +1,32 @@
+{
+  "javascript.validate.enable": true,
+  "npm.autoDetect": "on",
+  "git.inputValidationLength": 1000,
+  "git.inputValidationSubjectLength": 100,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "eslint.workingDirectories": [{ "pattern": "apps/*/" }, { "pattern": "packages/*/" }, { "pattern": "tooling/*/" }],
+  "files.watcherExclude": {
+    ".git": true,
+    "node_modules": true
+  },
+  "files.exclude": {
+    // we hide these so that we don't accidentally try to edit them; they're just copies of the root .env file
+    "apps/payloadcms/.env": true,
+    "apps/mongodb/.env": true
+  },
+  "tailwindCSS.experimental.classRegex": [["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]],
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "typescript.validate.enable": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.completeFunctionCalls": true,
+  "typescript.surveys.enabled": false,
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "@radix-ui", // in nextjs project, we want to import from ~/src/components/ui instead
+    "@types/node/process.d.ts", // in nextjs project, we want to import env from from ~/src/env.cjs instead
+    "@types/node/console.d.ts" // in nextjs project, we want ot import log from ~/src/lib/log instead
+  ]
+}

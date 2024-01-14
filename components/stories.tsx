@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import Highlighter from "react-highlight-words";
 import { getTableConfig } from "drizzle-orm/pg-core";
+import { UpvoteForm } from "@/components/upvote-form";
 
 const PER_PAGE = 30;
 const storiesTableName = getTableConfig(storiesTable).name;
@@ -145,6 +146,7 @@ export async function Stories({
               <span className="align-top text-[#666] md:text-[#828282] text-right flex-shrink-0 min-w-6 md:min-w-5">
                 {n + (page - 1) * PER_PAGE + 1}.
               </span>
+              <UpvoteForm storyId={story.id} />
               <div>
                 {story.url != null ? (
                   <a

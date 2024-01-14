@@ -1,10 +1,11 @@
 "use server";
 
 import z from "zod";
-import { db, storiesTable, genStoryId } from "@/app/db";
+import { db, storiesTable, genStoryId, usersTable } from "@/app/db";
 import { auth } from "@/app/auth";
 import { redirect } from "next/navigation";
 import { newStoryRateLimit } from "@/lib/rate-limit";
+import { sql } from "drizzle-orm";
 
 const SubmitActionSchema = z
   .object({
@@ -85,11 +86,21 @@ export async function submitAction(
   const id = genStoryId();
 
   try {
+    const user = (
+      await db
+        .select({
+          username: usersTable.username,
+        })
+        .from(usersTable)
+        .where(sql`${usersTable.id} = ${session.user.id}`)
+        .limit(1)
+    )[0];
     await db.insert(storiesTable).values({
       id,
       type: getType(input.data.title as string),
       title: input.data.title as string,
       points: 1,
+      username: user.username,
       domain: input.data.url
         ? new URL(input.data.url as string).hostname
         : null,
