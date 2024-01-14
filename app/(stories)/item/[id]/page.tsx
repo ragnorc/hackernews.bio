@@ -79,7 +79,7 @@ const getStory = async function getStory({
   return (await query)[0];
 };
 
-export const cachedGetStory = (opts: GetStoryOptions) => {
+export const cachedGetStory = async function (opts: GetStoryOptions) {
   const cached = unstable_cache(
     async (options: GetStoryOptions) => getStory(options),
     [],
