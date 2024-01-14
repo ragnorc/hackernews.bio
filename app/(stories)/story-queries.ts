@@ -3,8 +3,14 @@ import { desc } from "drizzle-orm";
 import { and, sql, ilike } from "drizzle-orm";
 import { getTableConfig } from "drizzle-orm/pg-core";
 import type { Session } from "next-auth";
+import { unstable_cache } from "next/cache";
 
 export const PER_PAGE = 30;
+export const STORIES_CACHE_KEY = "stories";
+export function composeStoryCacheKey(storyId: string) {
+  return `story-${storyId}`;
+}
+
 const storiesTableName = getTableConfig(storiesTable).name;
 
 export async function getStoriesCount() {
@@ -19,21 +25,23 @@ export async function getStoriesCount() {
   return row.estimate ?? 0;
 }
 
-export async function getStories({
-  isNewest,
-  page,
-  type,
-  q,
-  session,
-  limit = PER_PAGE,
-}: {
+type GetStoriesOptions = {
   isNewest: boolean;
   page: number;
   type: string | null;
   q: string | null;
   session?: Session | null;
   limit?: number;
-}) {
+};
+
+async function getStories({
+  isNewest,
+  page,
+  type,
+  q,
+  session,
+  limit = PER_PAGE,
+}: GetStoriesOptions) {
   const userId = session?.user?.id;
 
   const query = db
@@ -77,6 +85,16 @@ export async function getStories({
 
   return await query;
 }
+
+/** Apply tags to stories that can be invalidated */
+export const cachedGetStories = unstable_cache(
+  async (opts: GetStoriesOptions) => getStories(opts),
+  [],
+  {
+    revalidate: 1, // avoid caching
+    tags: [STORIES_CACHE_KEY],
+  }
+);
 
 function storiesWhere({
   isNewest,

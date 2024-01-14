@@ -9,9 +9,9 @@ import { UnvoteForm, VoteForm } from "@/components/voting";
 import { auth } from "@/app/auth";
 import {
   PER_PAGE,
-  getStories,
+  cachedGetStories,
   hasMoreStories,
-} from "@/app/(stories)/query-stories";
+} from "@/app/(stories)/story-queries";
 
 export async function Stories({
   page = 1,
@@ -26,12 +26,12 @@ export async function Stories({
 }) {
   const uid = headers().get("x-vercel-id") ?? nanoid();
 
-  console.time(`auth ${uid}`);
+  console.time(`authenticate user ${uid}`);
   const session = await auth();
-  console.timeEnd(`auth ${uid}`);
+  console.timeEnd(`authenticate user ${uid}`);
 
   console.time(`fetch stories ${uid}`);
-  const stories = await getStories({
+  const stories = await cachedGetStories({
     page,
     isNewest,
     type,
