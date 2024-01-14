@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { Comments } from "@/components/comments";
 import { ReplyForm } from "./reply-form";
 import Link from "next/link";
+import { VoteIcon } from "@/components/icons/vote-icon";
 
 export const metadata = {
   openGraph: {
@@ -73,14 +74,7 @@ export default async function ItemPage({
     <div className="px-3">
       <div className="mb-4 flex items-start">
         <div className="flex flex-col items-center mr-1 gap-y-1">
-          <svg
-            height="12"
-            viewBox="0 0 32 16"
-            width="12"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="m2 27 14-29 14 29z" fill="#999" />
-          </svg>
+          <VoteIcon />
         </div>
         <div className="flex-grow">
           {story.url != null ? (

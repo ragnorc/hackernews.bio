@@ -142,11 +142,15 @@ export async function Stories({
       <ul className="space-y-2">
         {stories.map((story, n) => {
           return (
-            <li key={story.id} className="flex gap-2">
-              <span className="align-top text-[#666] md:text-[#828282] text-right flex-shrink-0 min-w-6 md:min-w-5">
-                {n + (page - 1) * PER_PAGE + 1}.
-              </span>
-              <UpvoteForm storyId={story.id} />
+            <li key={story.id} className="flex gap-1">
+              <div className="flex">
+                <span className="align-top text-[#666] md:text-[#828282] text-right flex-shrink-0 min-w-6 md:min-w-5">
+                  {n + (page - 1) * PER_PAGE + 1}.
+                </span>
+                <div className="flex flex-col items-center ml-0.5">
+                  <UpvoteForm storyId={story.id} />
+                </div>{" "}
+              </div>
               <div>
                 {story.url != null ? (
                   <a
