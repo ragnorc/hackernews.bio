@@ -38,10 +38,7 @@ export const metadata = {
 
 type GetStoryOptions = { idParam: string; session: Session | null };
 
-const getStory = async function getStory({
-  idParam,
-  session,
-}: GetStoryOptions) {
+const getStory = async ({ idParam, session }: GetStoryOptions) => {
   const id = composeStoryId(idParam);
   const userId = session?.user?.id;
 
@@ -79,7 +76,7 @@ const getStory = async function getStory({
   return (await query)[0];
 };
 
-export const cachedGetStory = async function (opts: GetStoryOptions) {
+const cachedGetStory = (opts: GetStoryOptions) => {
   const cached = unstable_cache(
     async (options: GetStoryOptions) => getStory(options),
     [],
@@ -105,7 +102,7 @@ export default async function ItemPage({
   const session = await auth();
 
   console.time(`fetch story ${idParam} (req: ${rid})`);
-  const story = await getStory({ idParam, session });
+  const story = await cachedGetStory({ idParam, session });
   console.timeEnd(`fetch story ${idParam} (req: ${rid})`);
 
   if (!story) {
