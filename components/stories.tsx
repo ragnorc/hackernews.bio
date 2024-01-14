@@ -1,4 +1,4 @@
-import { db, usersTable, storiesTable } from "@/app/db";
+import { db, usersTable, storiesTable, upvotesTable } from "@/app/db";
 import { desc } from "drizzle-orm";
 import { TimeAgo } from "@/components/time-ago";
 import { headers } from "next/headers";
@@ -9,7 +9,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import Highlighter from "react-highlight-words";
 import { getTableConfig } from "drizzle-orm/pg-core";
-import { UpvoteForm } from "@/components/upvote-form";
+import { UnvoteForm, UpvoteForm } from "@/components/upvote-form";
+import { auth } from "@/app/auth";
+import { Session } from "next-auth";
 
 const PER_PAGE = 30;
 const storiesTableName = getTableConfig(storiesTable).name;
@@ -31,25 +33,48 @@ export async function getStories({
   page,
   type,
   q,
+  session,
   limit = PER_PAGE,
 }: {
   isNewest: boolean;
   page: number;
   type: string | null;
   q: string | null;
+  session: Session | null;
   limit?: number;
 }) {
-  return await db
+  const userId = session?.user?.id;
+
+  const select: Parameters<typeof db.select>[0] = {
+    id: storiesTable.id,
+    title: storiesTable.title,
+    url: storiesTable.url,
+    domain: storiesTable.domain,
+    username: storiesTable.username,
+    points: storiesTable.points,
+    submitted_by: usersTable.username,
+    comments_count: storiesTable.comments_count,
+    created_at: storiesTable.created_at,
+  };
+  if (userId) {
+    select.upvoted_by_me = upvotesTable.id;
+  }
+  const query = db
     .select({
-      id: storiesTable.id,
-      title: storiesTable.title,
-      url: storiesTable.url,
-      domain: storiesTable.domain,
-      username: storiesTable.username,
-      points: storiesTable.points,
-      submitted_by: usersTable.username,
-      comments_count: storiesTable.comments_count,
-      created_at: storiesTable.created_at,
+      ...{
+        id: storiesTable.id,
+        title: storiesTable.title,
+        url: storiesTable.url,
+        domain: storiesTable.domain,
+        username: storiesTable.username,
+        points: storiesTable.points,
+        submitted_by: usersTable.username,
+        comments_count: storiesTable.comments_count,
+        created_at: storiesTable.created_at,
+      },
+      ...(userId
+        ? { upvoted_by_me: sql<boolean>`${upvotesTable.id} IS NOT NULL` }
+        : {}),
     })
     .from(storiesTable)
     .orderBy(desc(storiesTable.created_at))
@@ -63,6 +88,16 @@ export async function getStories({
     .limit(limit)
     .offset((page - 1) * limit)
     .leftJoin(usersTable, sql`${usersTable.id} = ${storiesTable.submitted_by}`);
+
+  console.debug("userid", userId);
+  if (userId) {
+    query.leftJoin(
+      upvotesTable,
+      sql`${upvotesTable.story_id} = ${storiesTable.id} AND ${upvotesTable.user_id} = ${userId}`
+    );
+  }
+
+  return await query;
 }
 
 function storiesWhere({
@@ -128,10 +163,12 @@ export async function Stories({
 }) {
   const uid = headers().get("x-vercel-id") ?? nanoid();
   console.time(`fetch stories ${uid}`);
+  const session = await auth();
   const stories = await getStories({
     page,
     isNewest,
     type,
+    session,
     q,
   });
   console.timeEnd(`fetch stories ${uid}`);
@@ -148,8 +185,11 @@ export async function Stories({
                   {n + (page - 1) * PER_PAGE + 1}.
                 </span>
                 <div className="flex flex-col items-center ml-0.5">
-                  <UpvoteForm storyId={story.id} />
-                </div>{" "}
+                  <UpvoteForm
+                    storyId={story.id}
+                    upvotedByMe={!!story.upvoted_by_me}
+                  />
+                </div>
               </div>
               <div>
                 {story.url != null ? (
@@ -193,8 +233,8 @@ export async function Stories({
                     title="Not implemented"
                   >
                     flag
-                  </span>{" "}
-                  |{" "}
+                  </span>
+                  {story.upvoted_by_me && <UnvoteForm storyId={story.id} />} |{" "}
                   <span
                     className="cursor-default"
                     aria-hidden="true"
