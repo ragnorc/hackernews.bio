@@ -84,8 +84,8 @@ export const genStoryId = () => {
   return `story_${nanoid(12)}`;
 };
 
-export const upvotesTable = pgTable(
-  "upvotes",
+export const votesTable = pgTable(
+  "votes",
   {
     id: varchar("id", { length: 256 }).primaryKey().notNull(),
     user_id: varchar("user_id", { length: 256 })
@@ -107,8 +107,8 @@ export const upvotesTable = pgTable(
   })
 );
 
-export const genUpvoteId = () => {
-  return `upvote_${nanoid(12)}`;
+export const genVoteId = () => {
+  return `vote_${nanoid(12)}`;
 };
 
 export const commentsTable = pgTable(

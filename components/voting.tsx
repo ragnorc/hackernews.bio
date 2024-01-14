@@ -4,33 +4,33 @@ import { unvoteAction, voteAction } from "@/app/(stories)/actions";
 import { VoteIcon } from "@/components/icons/vote-icon";
 import { useFormStatus } from "react-dom";
 
-export function UpvoteForm({
+export function VoteForm({
   storyId,
-  upvotedByMe,
+  votedByMe,
 }: {
   storyId: string;
-  upvotedByMe: boolean;
+  votedByMe: boolean;
 }) {
   return (
     <form action={voteAction} className="w-3.5">
-      <UpvoteFormFields storyId={storyId} upvotedByMe={upvotedByMe} />
+      <VoteFormFields storyId={storyId} votedByMe={votedByMe} />
     </form>
   );
 }
 
-function UpvoteFormFields({
+function VoteFormFields({
   storyId,
-  upvotedByMe,
+  votedByMe,
 }: {
   storyId: string;
-  upvotedByMe: boolean;
+  votedByMe: boolean;
 }) {
   const { pending } = useFormStatus();
 
   return (
     <>
       <input type="hidden" name="storyId" value={storyId} />
-      {!upvotedByMe && !pending && (
+      {!votedByMe && !pending && (
         <button>
           <VoteIcon />
         </button>
@@ -41,7 +41,7 @@ function UpvoteFormFields({
 
 export function UnvoteForm({ storyId }: { storyId: string }) {
   return (
-    <form action={unvoteAction} style={{ display: "inline" }}>
+    <form action={unvoteAction} className="inline">
       <UnvoteFormFields storyId={storyId} />
     </form>
   );

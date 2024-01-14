@@ -2,17 +2,11 @@
 
 import { signOut } from "@/app/auth";
 import z from "zod";
-import {
-  db,
-  usersTable,
-  storiesTable,
-  upvotesTable,
-  genUpvoteId,
-} from "@/app/db";
+import { db, usersTable, storiesTable, votesTable, genVoteId } from "@/app/db";
 import { auth } from "@/app/auth";
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { upvoteRateLimit } from "@/lib/rate-limit";
+import { unvoteRateLimit, voteRateLimit } from "@/lib/rate-limit";
 
 export async function signOutAction() {
   await signOut();
@@ -44,11 +38,11 @@ export type VoteActionData = {
         message: string;
       }
     | {
-        code: "ALREADY_UPVOTED_ERROR";
+        code: "ALREADY_VOTED_ERROR";
         message: string;
       }
     | {
-        code: "SELF_UPVOTE_ERROR";
+        code: "SELF_VOTE_ERROR";
         message: string;
       };
 };
@@ -97,7 +91,7 @@ export async function voteAction(
     };
   }
 
-  const rl = await upvoteRateLimit.limit(user.id);
+  const rl = await voteRateLimit.limit(user.id);
 
   if (!rl.success) {
     return {
@@ -119,13 +113,13 @@ export async function voteAction(
           id: storiesTable.id,
           username: storiesTable.username,
           submitted_by: storiesTable.submitted_by,
-          upvote_id: upvotesTable.id,
+          vote_id: votesTable.id,
         })
         .from(storiesTable)
         .where(sql`${storiesTable.id} = ${data.data.storyId}`)
         .leftJoin(
-          upvotesTable,
-          sql`${storiesTable.id} = ${upvotesTable.story_id} AND ${upvotesTable.user_id} = ${user.id}`
+          votesTable,
+          sql`${storiesTable.id} = ${votesTable.story_id} AND ${votesTable.user_id} = ${user.id}`
         )
         .limit(1)
     )[0];
@@ -134,11 +128,11 @@ export async function voteAction(
       throw new Error("Story not found");
     }
 
-    if (story.upvote_id) {
+    if (story.vote_id) {
       return {
         error: {
-          code: "ALREADY_UPVOTED_ERROR",
-          message: "You already upvoted this story",
+          code: "ALREADY_VOTED_ERROR",
+          message: "You already voted for this story",
         },
       };
     }
@@ -146,15 +140,15 @@ export async function voteAction(
     if (story.submitted_by === user.id) {
       return {
         error: {
-          code: "SELF_UPVOTE_ERROR",
-          message: "You can't upvote your own story",
+          code: "SELF_VOTE_ERROR",
+          message: "You can't vote for your own story",
         },
       };
     }
 
     await Promise.all([
-      tx.insert(upvotesTable).values({
-        id: genUpvoteId(),
+      tx.insert(votesTable).values({
+        id: genVoteId(),
         user_id: user.id,
         story_id: story.id,
       }),
@@ -209,14 +203,6 @@ export type UnvoteActionData = {
     | {
         code: "AUTH_ERROR";
         message: string;
-      }
-    | {
-        code: "ALREADY_UPVOTED_ERROR";
-        message: string;
-      }
-    | {
-        code: "SELF_UPVOTE_ERROR";
-        message: string;
       };
 };
 
@@ -264,7 +250,7 @@ export async function unvoteAction(
     };
   }
 
-  const rl = await upvoteRateLimit.limit(user.id);
+  const rl = await unvoteRateLimit.limit(user.id);
 
   if (!rl.success) {
     return {
@@ -286,13 +272,13 @@ export async function unvoteAction(
           id: storiesTable.id,
           username: storiesTable.username,
           submitted_by: storiesTable.submitted_by,
-          upvote_id: upvotesTable.id,
+          vote_id: votesTable.id,
         })
         .from(storiesTable)
         .where(sql`${storiesTable.id} = ${data.data.storyId}`)
         .leftJoin(
-          upvotesTable,
-          sql`${storiesTable.id} = ${upvotesTable.story_id} AND ${upvotesTable.user_id} = ${user.id}`
+          votesTable,
+          sql`${storiesTable.id} = ${votesTable.story_id} AND ${votesTable.user_id} = ${user.id}`
         )
         .limit(1)
     )[0];
@@ -302,9 +288,7 @@ export async function unvoteAction(
     }
 
     await Promise.all([
-      tx
-        .delete(upvotesTable)
-        .where(sql`${upvotesTable.id} = ${story.upvote_id}`),
+      tx.delete(votesTable).where(sql`${votesTable.id} = ${story.vote_id}`),
       tx
         .update(storiesTable)
         .set({

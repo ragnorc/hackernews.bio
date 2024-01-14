@@ -1,4 +1,4 @@
-import { db, usersTable, storiesTable, upvotesTable } from "@/app/db";
+import { db, usersTable, storiesTable, votesTable } from "@/app/db";
 import { desc } from "drizzle-orm";
 import { TimeAgo } from "@/components/time-ago";
 import { headers } from "next/headers";
@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import Highlighter from "react-highlight-words";
 import { getTableConfig } from "drizzle-orm/pg-core";
-import { UnvoteForm, UpvoteForm } from "@/components/upvote-form";
+import { UnvoteForm, VoteForm } from "@/components/voting";
 import { auth } from "@/app/auth";
 import { Session } from "next-auth";
 
@@ -60,7 +60,7 @@ export async function getStories({
       },
       ...(userId
         ? {
-            upvoted_by_me: sql<boolean>`${upvotesTable.id} IS NOT NULL`,
+            voted_by_me: sql<boolean>`${votesTable.id} IS NOT NULL`,
           }
         : {}),
     })
@@ -80,8 +80,8 @@ export async function getStories({
   console.debug("userid", userId);
   if (userId) {
     query.leftJoin(
-      upvotesTable,
-      sql`${upvotesTable.story_id} = ${storiesTable.id} AND ${upvotesTable.user_id} = ${userId}`
+      votesTable,
+      sql`${votesTable.story_id} = ${storiesTable.id} AND ${votesTable.user_id} = ${userId}`
     );
   }
 
@@ -173,9 +173,9 @@ export async function Stories({
                   {n + (page - 1) * PER_PAGE + 1}.
                 </span>
                 <div className="flex flex-col items-center ml-0.5">
-                  <UpvoteForm
+                  <VoteForm
                     storyId={story.id}
-                    upvotedByMe={!!story.upvoted_by_me}
+                    votedByMe={!!story.voted_by_me}
                   />
                 </div>
               </div>
@@ -211,7 +211,7 @@ export async function Stories({
                     ({story.domain})
                   </span>
                 )}
-                <p className="text-xs text-[#666] md:text-[#828282]">
+                <div className="text-xs text-[#666] md:text-[#828282]">
                   {story.points} point{story.points > 1 ? "s" : ""} by{" "}
                   {story.submitted_by ?? story.username}{" "}
                   <TimeAgo now={now} date={story.created_at} /> |{" "}
@@ -222,7 +222,7 @@ export async function Stories({
                   >
                     flag
                   </span>
-                  {story.upvoted_by_me && <UnvoteForm storyId={story.id} />} |{" "}
+                  {story.voted_by_me && <UnvoteForm storyId={story.id} />} |{" "}
                   <span
                     className="cursor-default"
                     aria-hidden="true"
@@ -238,7 +238,7 @@ export async function Stories({
                   >
                     {story.comments_count} comments
                   </Link>
-                </p>
+                </div>
               </div>
             </li>
           );
