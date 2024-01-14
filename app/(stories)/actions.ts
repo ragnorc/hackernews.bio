@@ -89,7 +89,7 @@ export async function voteAction(
     return {
       error: {
         code: "RATE_LIMIT_ERROR",
-        message: "Too many comments. Try again later",
+        message: "Too many votes. Try again later",
       },
     };
   }
@@ -239,7 +239,7 @@ export async function unvoteAction(
     return {
       error: {
         code: "RATE_LIMIT_ERROR",
-        message: "Too many comments. Try again later",
+        message: "Too many unvotes. Try again later",
       },
     };
   }
