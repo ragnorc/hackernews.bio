@@ -7,6 +7,7 @@ import { auth } from "@/app/auth";
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { unvoteRateLimit, voteRateLimit } from "@/lib/rate-limit";
+import { redirect } from "next/navigation";
 
 export async function signOutAction() {
   await signOut();
@@ -34,10 +35,6 @@ export type VoteActionData = {
         message: string;
       }
     | {
-        code: "AUTH_ERROR";
-        message: string;
-      }
-    | {
         code: "ALREADY_VOTED_ERROR";
         message: string;
       }
@@ -53,12 +50,7 @@ export async function voteAction(
   const session = await auth();
 
   if (!session?.user?.id) {
-    return {
-      error: {
-        code: "AUTH_ERROR",
-        message: "You must be logged in to vote.",
-      },
-    };
+    redirect("/login");
   }
 
   const data = VoteActionSchema.safeParse({
@@ -199,10 +191,6 @@ export type UnvoteActionData = {
     | {
         code: "RATE_LIMIT_ERROR";
         message: string;
-      }
-    | {
-        code: "AUTH_ERROR";
-        message: string;
       };
 };
 
@@ -212,12 +200,7 @@ export async function unvoteAction(
   const session = await auth();
 
   if (!session?.user?.id) {
-    return {
-      error: {
-        code: "AUTH_ERROR",
-        message: "You must be logged in to unvote.",
-      },
-    };
+    redirect("/login");
   }
 
   const data = UnvoteActionSchema.safeParse({

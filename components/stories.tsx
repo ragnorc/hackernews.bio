@@ -77,7 +77,6 @@ export async function getStories({
     .offset((page - 1) * limit)
     .leftJoin(usersTable, sql`${usersTable.id} = ${storiesTable.submitted_by}`);
 
-  console.debug("userid", userId);
   if (userId) {
     query.leftJoin(
       votesTable,

@@ -1,11 +1,10 @@
 "use server";
 
 import z from "zod";
-import { db, storiesTable, genStoryId, usersTable } from "@/app/db";
+import { db, storiesTable, genStoryId } from "@/app/db";
 import { auth } from "@/app/auth";
 import { redirect } from "next/navigation";
 import { newStoryRateLimit } from "@/lib/rate-limit";
-import { sql } from "drizzle-orm";
 
 const SubmitActionSchema = z
   .object({
