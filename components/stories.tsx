@@ -45,20 +45,6 @@ export async function getStories({
 }) {
   const userId = session?.user?.id;
 
-  const select: Parameters<typeof db.select>[0] = {
-    id: storiesTable.id,
-    title: storiesTable.title,
-    url: storiesTable.url,
-    domain: storiesTable.domain,
-    username: storiesTable.username,
-    points: storiesTable.points,
-    submitted_by: usersTable.username,
-    comments_count: storiesTable.comments_count,
-    created_at: storiesTable.created_at,
-  };
-  if (userId) {
-    select.upvoted_by_me = upvotesTable.id;
-  }
   const query = db
     .select({
       ...{
@@ -73,7 +59,9 @@ export async function getStories({
         created_at: storiesTable.created_at,
       },
       ...(userId
-        ? { upvoted_by_me: sql<boolean>`${upvotesTable.id} IS NOT NULL` }
+        ? {
+            upvoted_by_me: sql<boolean>`${upvotesTable.id} IS NOT NULL`,
+          }
         : {}),
     })
     .from(storiesTable)
