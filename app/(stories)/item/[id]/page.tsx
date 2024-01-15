@@ -98,7 +98,7 @@ export default async function ItemPage({
   return (
     <div className="px-3">
       <div className="mb-4 flex items-start">
-        <div className="flex flex-col items-center mr-1 gap-y-1">
+        <div className="flex flex-col items-center mr-0.5 gap-y-1">
           <VoteForm
             storyId={composeStoryId(idParam)}
             votedByMe={!!story.voted_by_me}
