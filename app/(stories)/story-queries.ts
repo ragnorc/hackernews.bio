@@ -103,16 +103,17 @@ function storiesOrderBy({
       return 3;
     }
     // sort by points, but favor newer stories
-    return 2;
+    return 1.5;
   })();
   if (newnessPower != null) {
-    // https://news.ycombinator.com/newsfaq.html: find days since story
-    // was created, then divide points by a power of that number
-    return sql`${storiesTable.points} / 
-               POWER(
-                 EXTRACT(EPOCH FROM NOW() - ${storiesTable.created_at}) / 86400, 
-                 ${newnessPower}
-               ) DESC`;
+    // https://news.ycombinator.com/newsfaq.html: find seconds since story
+    // was created, then divide points by a power of that number, avoiding
+    // division by 0
+    return sql`
+      CASE 
+        WHEN POWER(EXTRACT(EPOCH FROM NOW() - ${storiesTable.created_at}), ${newnessPower}) = 0 THEN ${storiesTable.points}
+        ELSE ${storiesTable.points} / POWER(EXTRACT(EPOCH FROM NOW() - ${storiesTable.created_at}), ${newnessPower})
+      END DESC`;
   }
   return storiesTable.created_at;
 }
