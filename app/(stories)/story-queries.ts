@@ -45,13 +45,11 @@ export async function getStories({
     })
     .from(storiesTable)
     .orderBy(
-      !isNewest && type == null && (q == null || q.length < 1)
-        ? // https://news.ycombinator.com/newsfaq.html: find hours since story
-          // was created, then divide points by the square of that number
-          sql`${storiesTable.points} / 
-              POWER(EXTRACT(EPOCH FROM NOW() - ${storiesTable.created_at}) / 86400, 2) 
-              DESC`
-        : storiesTable.created_at
+      storiesOrderBy({
+        isNewest,
+        type,
+        q,
+      })
     )
     .where(
       storiesWhere({
@@ -84,6 +82,39 @@ function storiesWhere({
         ),
     q != null && q.length ? ilike(storiesTable.title, `%${q}%`) : undefined
   );
+}
+
+function storiesOrderBy({
+  isNewest,
+  type,
+  q,
+}: {
+  isNewest: boolean;
+  type: string | null;
+  q: string | null;
+}) {
+  const newnessPower = (() => {
+    // sort by newest
+    if (isNewest || (q != null && q.length)) {
+      return null;
+    }
+    // sort by points, but highly favor newer stories
+    if (type === "ask" || type === "show" || type === "jobs") {
+      return 3;
+    }
+    // sort by points, but favor newer stories
+    return 2;
+  })();
+  if (newnessPower != null) {
+    // https://news.ycombinator.com/newsfaq.html: find days since story
+    // was created, then divide points by a power of that number
+    return sql`${storiesTable.points} / 
+               POWER(
+                 EXTRACT(EPOCH FROM NOW() - ${storiesTable.created_at}) / 86400, 
+                 ${newnessPower}
+               ) DESC`;
+  }
+  return storiesTable.created_at;
 }
 
 export async function hasMoreStories({
