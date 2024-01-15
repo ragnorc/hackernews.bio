@@ -44,7 +44,15 @@ export async function getStories({
       created_at: storiesTable.created_at,
     })
     .from(storiesTable)
-    .orderBy(desc(storiesTable.created_at))
+    .orderBy(
+      !isNewest && type == null && (q == null || q.length < 1)
+        ? // https://news.ycombinator.com/newsfaq.html: find hours since story
+          // was created, then divide points by the square of that number
+          sql`${storiesTable.points} / 
+              POWER(EXTRACT(EPOCH FROM NOW() - ${storiesTable.created_at}) / 86400, 2) 
+              DESC`
+        : storiesTable.created_at
+    )
     .where(
       storiesWhere({
         isNewest,
