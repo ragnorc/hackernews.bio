@@ -3,7 +3,7 @@ const config = {
   experimental: {
     ppr: "thing",
   },
-  rewrites: async () => [
+  rewrites: () => [
     {
       source: "/newest",
       destination: "/?newest=1",
