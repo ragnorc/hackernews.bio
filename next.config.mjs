@@ -5,10 +5,6 @@ export default {
   },
   rewrites: () => [
     {
-      source: "/newest",
-      destination: "/?newest=1",
-    },
-    {
       source: "/newcomments",
       destination: "/threads?new=1",
     },
