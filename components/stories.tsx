@@ -24,6 +24,7 @@ export async function Stories({
   type?: string | null;
   q?: string | null;
 }) {
+  console.debug("isNewest", isNewest);
   const uid = headers().get("x-vercel-id") ?? nanoid();
 
   console.time(`authenticate user ${uid}`);
