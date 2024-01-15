@@ -1,14 +1,10 @@
-import { db, usersTable, storiesTable } from "@/app/db";
-import { desc } from "drizzle-orm";
 import { TimeAgo } from "@/components/time-ago";
 import { headers } from "next/headers";
 import { nanoid } from "nanoid";
-import { and, sql, ilike } from "drizzle-orm";
 import { MoreLink } from "./more-link";
 import Link from "next/link";
 import { Suspense } from "react";
 import Highlighter from "react-highlight-words";
-import { getTableConfig } from "drizzle-orm/pg-core";
 import {
   PER_PAGE,
   getStories,
