@@ -97,8 +97,8 @@ export default async function ItemPage({
   const now = Date.now();
   return (
     <div className="px-3">
-      <div className="mb-4 flex items-start">
-        <div className="flex flex-col items-center mr-0.5 gap-y-1">
+      <div className="mb-4 flex items-start gap-x-0.5">
+        <div className="flex flex-col items-center gap-y-1">
           <VoteForm
             storyId={composeStoryId(idParam)}
             votedByMe={!!story.voted_by_me}
