@@ -1,9 +1,9 @@
 /** @type {import("next").NextConfig} */
-const config = {
+export default {
   experimental: {
     ppr: true,
   },
-  rewrites: () => [
+  rewrites: async () => [
     {
       source: "/newest",
       destination: "/?newest=1",
