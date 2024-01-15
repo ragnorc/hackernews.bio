@@ -46,7 +46,7 @@
     "drizzle-kit": "^0.20.9",
     "eslint": "^8",
     "eslint-config-next": "14.0.2",
-    "next": "14.0.5-canary.1",
+    "next": "14.0.5-canary.41",
     "pg": "^8.11.3",
     "postcss": "^8",
     "tailwind-merge": "^2.0.0",
