@@ -1,15 +1,17 @@
+import { db, usersTable, storiesTable } from "@/app/db";
+import { desc } from "drizzle-orm";
 import { TimeAgo } from "@/components/time-ago";
 import { headers } from "next/headers";
 import { nanoid } from "nanoid";
+import { and, sql, ilike } from "drizzle-orm";
 import { MoreLink } from "./more-link";
 import Link from "next/link";
 import { Suspense } from "react";
 import Highlighter from "react-highlight-words";
-import { UnvoteForm, VoteForm } from "@/components/voting";
-import { auth } from "@/app/auth";
+import { getTableConfig } from "drizzle-orm/pg-core";
 import {
   PER_PAGE,
-  cachedGetStories,
+  getStories,
   hasMoreStories,
 } from "@/app/(stories)/story-queries";
 
@@ -24,19 +26,12 @@ export async function Stories({
   type?: string | null;
   q?: string | null;
 }) {
-  console.debug("isNewest", isNewest);
   const uid = headers().get("x-vercel-id") ?? nanoid();
-
-  console.time(`authenticate user ${uid}`);
-  const session = await auth();
-  console.timeEnd(`authenticate user ${uid}`);
-
   console.time(`fetch stories ${uid}`);
-  const stories = await cachedGetStories({
+  const stories = await getStories({
     page,
     isNewest,
     type,
-    session,
     q,
   });
   console.timeEnd(`fetch stories ${uid}`);
@@ -47,18 +42,10 @@ export async function Stories({
       <ul className="space-y-2">
         {stories.map((story, n) => {
           return (
-            <li key={story.id} className="flex gap-1">
-              <div className="flex">
-                <span className="align-top text-[#666] md:text-[#828282] text-right flex-shrink-0 min-w-6 md:min-w-5">
-                  {n + (page - 1) * PER_PAGE + 1}.
-                </span>
-                <div className="flex flex-col items-center ml-0.5">
-                  <VoteForm
-                    storyId={story.id}
-                    votedByMe={!!story.voted_by_me}
-                  />
-                </div>
-              </div>
+            <li key={story.id} className="flex gap-2">
+              <span className="align-top text-[#666] md:text-[#828282] text-right flex-shrink-0 min-w-6 md:min-w-5">
+                {n + (page - 1) * PER_PAGE + 1}.
+              </span>
               <div>
                 {story.url != null ? (
                   <a
@@ -91,28 +78,26 @@ export async function Stories({
                     ({story.domain})
                   </span>
                 )}
-                <div className="text-xs text-[#666] md:text-[#828282]">
+                <p className="text-xs text-[#666] md:text-[#828282]">
                   {story.points} point{story.points > 1 ? "s" : ""} by{" "}
                   {story.submitted_by ?? story.username}{" "}
-                  <TimeAgo now={now} date={story.created_at} />
-                  <span aria-hidden={true}> | </span>
+                  <TimeAgo now={now} date={story.created_at} /> |{" "}
                   <span
                     className="cursor-default"
                     aria-hidden="true"
                     title="Not implemented"
                   >
                     flag
-                  </span>
-                  {story.voted_by_me && <UnvoteForm storyId={story.id} />}
-                  <span aria-hidden={true}> | </span>
+                  </span>{" "}
+                  |{" "}
                   <span
                     className="cursor-default"
                     aria-hidden="true"
                     title="Not implemented"
                   >
                     hide
-                  </span>
-                  <span aria-hidden={true}> | </span>
+                  </span>{" "}
+                  |{" "}
                   <Link
                     prefetch={true}
                     className="hover:underline"
@@ -120,7 +105,7 @@ export async function Stories({
                   >
                     {story.comments_count} comments
                   </Link>
-                </div>
+                </p>
               </div>
             </li>
           );

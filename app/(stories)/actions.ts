@@ -5,13 +5,9 @@ import z from "zod";
 import { db, usersTable, storiesTable, votesTable, genVoteId } from "@/app/db";
 import { auth } from "@/app/auth";
 import { sql } from "drizzle-orm";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { unvoteRateLimit, voteRateLimit } from "@/lib/rate-limit";
 import { redirect } from "next/navigation";
-import {
-  STORIES_CACHE_KEY,
-  composeStoryCacheKey,
-} from "@/app/(stories)/story-queries";
 
 export async function signOutAction() {
   await signOut();
@@ -162,8 +158,8 @@ export async function voteAction(
         .where(sql`${usersTable.id} = ${story.submitted_by}`),
     ]);
 
-    revalidateTag(STORIES_CACHE_KEY);
-    revalidateTag(composeStoryCacheKey(story.id));
+    // revalidate all data, including points for all stories
+    revalidatePath("/", "layout");
 
     return {};
   } catch (err) {
@@ -291,8 +287,8 @@ export async function unvoteAction(
         .where(sql`${usersTable.id} = ${story.submitted_by}`),
     ]);
 
-    revalidateTag(STORIES_CACHE_KEY);
-    revalidateTag(composeStoryCacheKey(story.id));
+    // revalidate all data, including points for all stories
+    revalidatePath("/", "layout");
 
     return {};
   } catch (err) {

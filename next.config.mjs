@@ -3,7 +3,7 @@ export default {
   experimental: {
     ppr: true,
   },
-  rewrites: async () => [
+  rewrites: () => [
     {
       source: "/newest",
       destination: "/?newest=1",

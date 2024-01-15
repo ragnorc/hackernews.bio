@@ -4,10 +4,7 @@ export const revalidate = 60;
 import { ImageResponse } from "next/og";
 import JSTimeAgo from "javascript-time-ago";
 import en from "javascript-time-ago/locale/en";
-import {
-  cachedGetStories,
-  getStoriesCount,
-} from "@/app/(stories)/story-queries";
+import { getStories, getStoriesCount } from "@/app/(stories)/story-queries";
 
 let timeAgo: JSTimeAgo | null = null;
 const numberFormatter = new Intl.NumberFormat("en-US");
@@ -23,7 +20,7 @@ export default async function MainOG() {
     timeAgo = new JSTimeAgo("en-US");
   }
 
-  const stories = await cachedGetStories({
+  const stories = await getStories({
     isNewest: false,
     page: 1,
     type: "story",
