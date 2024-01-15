@@ -1,7 +1,7 @@
 /** @type {import("next").NextConfig} */
 const config = {
   experimental: {
-    ppr: "thing",
+    ppr: true,
   },
   rewrites: () => [
     {
