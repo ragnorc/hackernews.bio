@@ -37,10 +37,6 @@ export type VoteActionData = {
     | {
         code: "ALREADY_VOTED_ERROR";
         message: string;
-      }
-    | {
-        code: "SELF_VOTE_ERROR";
-        message: string;
       };
 };
 
@@ -94,8 +90,7 @@ export async function voteAction(
     };
   }
 
-  // TODO: use transactions, but Neon doesn't support them yet
-  // in the serverless http driver :raised-eyebrow:
+  // TODO: transaction
   // await db.transaction(async (tx) => {
   const tx = db;
   try {
@@ -125,15 +120,6 @@ export async function voteAction(
         error: {
           code: "ALREADY_VOTED_ERROR",
           message: "You already voted for this story",
-        },
-      };
-    }
-
-    if (story.submitted_by === user.id) {
-      return {
-        error: {
-          code: "SELF_VOTE_ERROR",
-          message: "You can't vote for your own story",
         },
       };
     }
@@ -192,6 +178,10 @@ export type UnvoteActionData = {
     | {
         code: "RATE_LIMIT_ERROR";
         message: string;
+      }
+    | {
+        code: "SELF_UNVOTE_ERROR";
+        message: string;
       };
 };
 
@@ -245,8 +235,7 @@ export async function unvoteAction(
     };
   }
 
-  // TODO: use transactions, but Neon doesn't support them yet
-  // in the serverless http driver :raised-eyebrow:
+  // TODO: transaction
   // await db.transaction(async (tx) => {
   const tx = db;
   try {
@@ -269,6 +258,15 @@ export async function unvoteAction(
 
     if (!story) {
       throw new Error("Story not found");
+    }
+
+    if (story.submitted_by === user.id) {
+      return {
+        error: {
+          code: "SELF_UNVOTE_ERROR",
+          message: "You can't unvote your own story",
+        },
+      };
     }
 
     await Promise.all([
