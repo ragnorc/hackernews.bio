@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "drizzle:generate": "drizzle-kit generate:pg",
-    "drizzle:push": "drizzle-kit push:pg"
+    "drizzle:push": "drizzle-kit push:pg",
+    "seed": "pnpm with-env tsx ./scripts/seed.ts",
+    "with-env": "dotenv -e .env.local --"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^0.3.12",
@@ -46,6 +48,7 @@
     "autoprefixer": "^10.0.1",
     "dotenv": "^16.3.1",
     "drizzle-kit": "^0.20.13",
+    "dotenv-cli": "^7.3.0",
     "eslint": "^8",
     "eslint-config-next": "14.0.2",
     "next": "14.0.5-canary.41",
@@ -54,6 +57,7 @@
     "tailwind-merge": "^2.0.0",
     "tailwindcss": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.7.0",
     "typescript": "^5"
   }
 }

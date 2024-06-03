@@ -44,7 +44,13 @@ export async function getStories({
       created_at: storiesTable.created_at,
     })
     .from(storiesTable)
-    .orderBy(desc(storiesTable.created_at))
+    .orderBy(
+      storiesOrderBy({
+        isNewest,
+        type,
+        q,
+      })
+    )
     .where(
       storiesWhere({
         isNewest,
@@ -76,6 +82,40 @@ function storiesWhere({
         ),
     q != null && q.length ? ilike(storiesTable.title, `%${q}%`) : undefined
   );
+}
+
+function storiesOrderBy({
+  isNewest,
+  type,
+  q,
+}: {
+  isNewest: boolean;
+  type: string | null;
+  q: string | null;
+}) {
+  const newnessPower = (() => {
+    // sort by newest
+    if (isNewest || (q != null && q.length)) {
+      return null;
+    }
+    // sort by points, but highly favor newer stories
+    if (type === "ask" || type === "show" || type === "jobs") {
+      return 3;
+    }
+    // sort by points, but favor newer stories
+    return 1.5;
+  })();
+  if (newnessPower != null) {
+    // https://news.ycombinator.com/newsfaq.html: find seconds since story
+    // was created, then divide points by a power of that number, avoiding
+    // division by 0
+    return sql`
+      CASE 
+        WHEN POWER(EXTRACT(EPOCH FROM NOW() - ${storiesTable.created_at}), ${newnessPower}) = 0 THEN ${storiesTable.points}
+        ELSE ${storiesTable.points} / POWER(EXTRACT(EPOCH FROM NOW() - ${storiesTable.created_at}), ${newnessPower})
+      END DESC`;
+  }
+  return storiesTable.created_at;
 }
 
 export async function hasMoreStories({
